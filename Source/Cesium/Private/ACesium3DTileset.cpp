@@ -614,9 +614,25 @@ void ACesium3DTileset::Tick(float DeltaTime)
 		}
 	}
 
+	CesiumGeospatial::GlobeRectangle melbourneExclusionZone = CesiumGeospatial::GlobeRectangle::fromDegrees(
+		144.89219,
+		-37.85288,
+		144.99486,
+		-37.77207
+	);
+
 	for (Cesium3DTiles::Tile* pTile : result.tilesToRenderThisFrame) {
 		if (pTile->getState() != Cesium3DTiles::Tile::LoadState::Done) {
 			continue;
+		}
+
+		if (this->IonAssetID == 96188) {
+			const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&pTile->getBoundingVolume());
+			if (pRegion) {
+				if (melbourneExclusionZone.intersect(pRegion->getRectangle())) {
+					continue;
+				}
+			}
 		}
 
 		//const Cesium3DTiles::TileID& id = pTile->getTileID();
