@@ -225,7 +225,7 @@ public:
   InaccurateSetGeoreferenceOrigin(const FVector& TargetLongitudeLatitudeHeight);
 
   /*
-   * USEFUL CONVERSION FUNCTIONS
+   * CONVERSION FUNCTIONS
    */
 
   /**
