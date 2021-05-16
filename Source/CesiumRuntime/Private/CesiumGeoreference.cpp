@@ -744,7 +744,7 @@ ACesiumGeoreference::ComputeEastNorthUpToEcef(const glm::dvec3& ecef) const {
   return glm::dmat3(
       CesiumGeospatial::Transforms::eastNorthUpToFixedFrame(ecef));
 }
-
+/*
 FMatrix ACesiumGeoreference::InaccurateComputeEastNorthUpToEcef(
     const FVector& ecef) const {
   glm::dmat3 enuToEcef =
@@ -755,6 +755,54 @@ FMatrix ACesiumGeoreference::InaccurateComputeEastNorthUpToEcef(
       FVector(enuToEcef[1].x, enuToEcef[1].y, enuToEcef[1].z),
       FVector(enuToEcef[2].x, enuToEcef[2].y, enuToEcef[2].z),
       FVector(0.0, 0.0, 0.0));
+}
+*/
+
+glm::dmat4 ACesiumGeoreference::computeToECEF(const FMatrix& matrix, const glm::dvec3 absoluteLocation) const {
+  const glm::dmat4& unrealWorldToEcef = this->_ueAbsToEcef;
+
+  glm::dmat4 actorToAbsoluteWorld(
+      glm::dvec4(
+          matrix.M[0][0],
+          matrix.M[0][1],
+          matrix.M[0][2],
+          matrix.M[0][3]),
+      glm::dvec4(
+          matrix.M[1][0],
+          matrix.M[1][1],
+          matrix.M[1][2],
+          matrix.M[1][3]),
+      glm::dvec4(
+          matrix.M[2][0],
+          matrix.M[2][1],
+          matrix.M[2][2],
+          matrix.M[2][3]),
+      glm::dvec4(absoluteLocation, 1.0));
+
+  return unrealWorldToEcef * actorToAbsoluteWorld;
+}
+
+glm::dmat4 ACesiumGeoreference::computeFromECEF(const FMatrix& matrix, const glm::dvec3 relativeLocation) const {
+  const glm::dmat4& ecefToUnrealWorld = this->_ecefToUeAbs;
+
+  glm::dmat4 ueAbsoluteToUeLocal = glm::dmat4(
+      glm::dvec4(
+          matrix.M[0][0],
+          matrix.M[0][1],
+          matrix.M[0][2],
+          matrix.M[0][3]),
+      glm::dvec4(
+          matrix.M[1][0],
+          matrix.M[1][1],
+          matrix.M[1][2],
+          matrix.M[1][3]),
+      glm::dvec4(
+          matrix.M[2][0],
+          matrix.M[2][1],
+          matrix.M[2][2],
+          matrix.M[2][3]),
+      glm::dvec4(relativeLocation, 1.0));
+    return ueAbsoluteToUeLocal * ecefToUnrealWorld;
 }
 
 /**

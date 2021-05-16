@@ -116,13 +116,11 @@ void AGlobeAwareDefaultPawn::AddControllerRollInput(float Val) {
 }
 
 FRotator AGlobeAwareDefaultPawn::GetViewRotation() const {
+
   FRotator localRotation = ADefaultPawn::GetViewRotation();
-
-  FMatrix enuAdjustmentMatrix =
-      this->Georeference->InaccurateComputeEastNorthUpToUnreal(
-          this->GetPawnViewLocation());
-
-  return FRotator(enuAdjustmentMatrix.ToQuat() * localRotation.Quaternion());
+  const FVector uePawnViewLocation = this->GetPawnViewLocation();
+  glm::dvec3 pawnViewLocation(uePawnViewLocation.X, uePawnViewLocation.Y, uePawnViewLocation.Z);
+  return this->Georeference->TransformRotatorEnuToUe(localRotation, pawnViewLocation);
 }
 
 FRotator AGlobeAwareDefaultPawn::GetBaseAimRotation() const {

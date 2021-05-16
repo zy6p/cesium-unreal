@@ -355,6 +355,7 @@ public:
       const FRotator& EnuRotator,
       const FVector& UeLocation) const;
 
+private: // TODO_GEOREF These should be private, I guess...
   /**
    * Computes the rotation matrix from the local East-North-Up to Unreal at the
    * specified Unreal relative world location (relative to the floating
@@ -369,8 +370,9 @@ public:
    * origin). The returned transformation works in Unreal's left-handed
    * coordinate system.
    */
-  UFUNCTION(BlueprintCallable, Category = "Cesium")
+  //UFUNCTION(BlueprintCallable, Category = "Cesium")
   FMatrix InaccurateComputeEastNorthUpToUnreal(const FVector& Ue) const;
+
 
   /**
    * Computes the rotation matrix from the local East-North-Up to
@@ -382,8 +384,11 @@ public:
    * Computes the rotation matrix from the local East-North-Up to
    * Earth-Centered, Earth-Fixed (ECEF) at the specified ECEF location.
    */
-  UFUNCTION(BlueprintCallable, Category = "Cesium")
-  FMatrix InaccurateComputeEastNorthUpToEcef(const FVector& Ecef) const;
+  // TODO_GEOREF Not used
+  //UFUNCTION(BlueprintCallable, Category = "Cesium")
+  //FMatrix InaccurateComputeEastNorthUpToEcef(const FVector& Ecef) const;
+
+public:
 
   /*
    * GEOREFERENCE TRANSFORMS
@@ -427,9 +432,12 @@ public:
    * to the "Ellipsoid-centered" reference frame (which is usually
    * Earth-centered, Earth-fixed). See {@link reference-frames.md}.
    */
-  const glm::dmat4& GetUnrealWorldToEllipsoidCenteredTransform() const {
-    return this->_ueAbsToEcef;
-  }
+  // TODO_GEOREF Don't force users to twiddle with matrices, replaced with computeToECEF
+  //const glm::dmat4& GetUnrealWorldToEllipsoidCenteredTransform() const {
+  //  return this->_ueAbsToEcef;
+  //}
+  glm::dmat4 computeToECEF(const FMatrix& matrix, const glm::dvec3 absoluteLocation) const;
+
 
   /**
    * @brief Gets the transformation from the "Ellipsoid-centered" reference
@@ -440,9 +448,12 @@ public:
    * "Unreal world" reference frame (with respect to the absolute world origin,
    * not the floating origin). See {@link reference-frames.md}.
    */
+  // TODO_GEOREF Don't force users to twiddle with matrices - partially replaced with computeFromECEF,
+  // but ... it's used in some places in a non-obvious way...
   const glm::dmat4& GetEllipsoidCenteredToUnrealWorldTransform() const {
     return this->_ecefToUeAbs;
   }
+  glm::dmat4 computeFromECEF(const FMatrix& matrix, const glm::dvec3 relativeLocation) const;
 
   /**
    * Adds a ICesiumGeoreferenceListener to be notified on changes to the world

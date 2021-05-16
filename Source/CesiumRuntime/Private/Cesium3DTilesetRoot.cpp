@@ -103,26 +103,8 @@ void UCesium3DTilesetRoot::_updateTilesetToUnrealRelativeWorldTransform() {
 
   FMatrix tilesetActorToUeLocal =
       this->GetComponentToWorld().ToMatrixWithScale();
-  glm::dmat4 ueAbsoluteToUeLocal = glm::dmat4(
-      glm::dvec4(
-          tilesetActorToUeLocal.M[0][0],
-          tilesetActorToUeLocal.M[0][1],
-          tilesetActorToUeLocal.M[0][2],
-          tilesetActorToUeLocal.M[0][3]),
-      glm::dvec4(
-          tilesetActorToUeLocal.M[1][0],
-          tilesetActorToUeLocal.M[1][1],
-          tilesetActorToUeLocal.M[1][2],
-          tilesetActorToUeLocal.M[1][3]),
-      glm::dvec4(
-          tilesetActorToUeLocal.M[2][0],
-          tilesetActorToUeLocal.M[2][1],
-          tilesetActorToUeLocal.M[2][2],
-          tilesetActorToUeLocal.M[2][3]),
-      glm::dvec4(relativeLocation, 1.0));
 
-  this->_tilesetToUnrealRelativeWorld =
-      ueAbsoluteToUeLocal * ellipsoidCenteredToUnrealWorld;
+  this->_tilesetToUnrealRelativeWorld = pTileset->Georeference->computeFromECEF(tilesetActorToUeLocal, relativeLocation);
 
   this->_isDirty = true;
 }

@@ -334,30 +334,11 @@ void UCesiumGeoreferenceComponent::_updateActorToECEF() {
     return;
   }
 
-  const glm::dmat4& unrealWorldToEcef =
-      this->Georeference->GetUnrealWorldToEllipsoidCenteredTransform();
-
   FMatrix actorToRelativeWorld =
       this->_ownerRoot->GetComponentToWorld().ToMatrixWithScale();
-  glm::dmat4 actorToAbsoluteWorld(
-      glm::dvec4(
-          actorToRelativeWorld.M[0][0],
-          actorToRelativeWorld.M[0][1],
-          actorToRelativeWorld.M[0][2],
-          actorToRelativeWorld.M[0][3]),
-      glm::dvec4(
-          actorToRelativeWorld.M[1][0],
-          actorToRelativeWorld.M[1][1],
-          actorToRelativeWorld.M[1][2],
-          actorToRelativeWorld.M[1][3]),
-      glm::dvec4(
-          actorToRelativeWorld.M[2][0],
-          actorToRelativeWorld.M[2][1],
-          actorToRelativeWorld.M[2][2],
-          actorToRelativeWorld.M[2][3]),
-      glm::dvec4(this->_absoluteLocation, 1.0));
 
-  this->_actorToECEF = unrealWorldToEcef * actorToAbsoluteWorld;
+  this->_actorToECEF = this->Georeference->computeToECEF(actorToRelativeWorld, this->_absoluteLocation);
+
   this->_updateDisplayECEF();
   this->_updateDisplayLongitudeLatitudeHeight();
 }
