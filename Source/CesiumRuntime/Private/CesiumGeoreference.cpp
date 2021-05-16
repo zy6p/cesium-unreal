@@ -858,7 +858,8 @@ void ACesiumGeoreference::_lineTraceViewportMouse(
   const FVector& viewLoc = cursor.GetOrigin();
   const FVector& viewDir = cursor.GetDirection();
 
-  FVector lineEnd = viewLoc + viewDir * 637100000.0;
+  const float earthRadiusCm = 637100000.0;
+  FVector lineEnd = viewLoc + viewDir * earthRadiusCm;
 
   static const FName LineTraceSingleName(TEXT("LevelEditorLineTrace"));
   if (ShowTrace) {
