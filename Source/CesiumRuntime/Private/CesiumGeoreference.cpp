@@ -117,7 +117,7 @@ void ACesiumGeoreference::PlaceGeoreferenceOriginHere() {
 
   // Long/Lat/Height camera location (also our new target georeference origin)
   std::optional<CesiumGeospatial::Cartographic> targetGeoreferenceOrigin =
-      CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+      this->_ellipsoid.cartesianToCartographic(
           cameraToECEF[3]);
 
   if (!targetGeoreferenceOrigin) {
@@ -314,9 +314,7 @@ void ACesiumGeoreference::UpdateGeoreference() {
         center /= numberOfPositions;
       }
     } else if (this->OriginPlacement == EOriginPlacement::CartographicOrigin) {
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84;
-      center = ellipsoid.cartographicToCartesian(
+      center = this->_ellipsoid.cartographicToCartesian(
           CesiumGeospatial::Cartographic::fromDegrees(
               this->OriginLongitude,
               this->OriginLatitude,
@@ -396,7 +394,7 @@ void ACesiumGeoreference::Tick(float DeltaTime) {
     if (this->ShowLoadRadii) {
       for (FCesiumSubLevel& level : this->CesiumSubLevels) {
         glm::dvec3 levelECEF =
-            CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+            this->_ellipsoid.cartographicToCartesian(
                 CesiumGeospatial::Cartographic::fromDegrees(
                     level.LevelLongitude,
                     level.LevelLatitude,
@@ -435,7 +433,7 @@ void ACesiumGeoreference::Tick(float DeltaTime) {
         glm::dvec3 grabbedLocationECEF =
             this->_ueAbsToEcef * grabbedLocationAbs;
         std::optional<CesiumGeospatial::Cartographic> optCartographic =
-            CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            this->_ellipsoid.cartesianToCartographic(
                 grabbedLocationECEF);
 
         if (optCartographic) {
@@ -490,7 +488,7 @@ void ACesiumGeoreference::Tick(float DeltaTime) {
         // be loaded
         if (levelName.Equals(level.LevelName)) {
           glm::dvec3 levelECEF =
-              CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+              this->_ellipsoid.cartographicToCartesian(
                   CesiumGeospatial::Cartographic::fromDegrees(
                       level.LevelLongitude,
                       level.LevelLatitude,
@@ -531,7 +529,7 @@ void ACesiumGeoreference::Tick(float DeltaTime) {
     glm::dvec3(this->_ueAbsToEcef[3])) > 1000000.0) {
             std::optional<CesiumGeospatial::Cartographic>
     targetGeoreferenceOrigin =
-    CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(cameraECEF); if
+    this->_ellipsoid.cartesianToCartographic(cameraECEF); if
     (targetGeoreferenceOrigin) {
                     this->_setGeoreferenceOrigin(glm::degrees(targetGeoreferenceOrigin->longitude),
     glm::degrees(targetGeoreferenceOrigin->latitude),
@@ -563,7 +561,7 @@ void ACesiumGeoreference::Tick(float DeltaTime) {
 
 glm::dvec3 ACesiumGeoreference::TransformLongitudeLatitudeHeightToEcef(
     const glm::dvec3& longitudeLatitudeHeight) const {
-  return CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+  return this->_ellipsoid.cartographicToCartesian(
       CesiumGeospatial::Cartographic::fromDegrees(
           longitudeLatitudeHeight.x,
           longitudeLatitudeHeight.y,
@@ -582,7 +580,7 @@ FVector ACesiumGeoreference::InaccurateTransformLongitudeLatitudeHeightToEcef(
 glm::dvec3 ACesiumGeoreference::TransformEcefToLongitudeLatitudeHeight(
     const glm::dvec3& ecef) const {
   std::optional<CesiumGeospatial::Cartographic> llh =
-      CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(ecef);
+      this->_ellipsoid.cartesianToCartographic(ecef);
   if (!llh) {
     // TODO: since degenerate cases only happen close to Earth's center
     // would it make more sense to assign an arbitrary but correct LLH
@@ -791,7 +789,7 @@ void ACesiumGeoreference::_setSunSky(double longitude, double latitude) {
 
   // SunSky needs to be clamped to the ellipsoid surface at this long/lat
   glm::dvec3 targetEcef =
-      CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+      this->_ellipsoid.cartographicToCartesian(
           CesiumGeospatial::Cartographic::fromDegrees(
               longitude,
               latitude,

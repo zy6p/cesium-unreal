@@ -495,6 +495,10 @@ private:
   double _ecefToUeAbs_Array[16];
   glm::dmat4& _ecefToUeAbs = *(glm::dmat4*)_ecefToUeAbs_Array;
 
+  UPROPERTY()
+  double _ellipsoidRadii_Array[3];
+  CesiumGeospatial::Ellipsoid _ellipsoid = CesiumGeospatial::Ellipsoid(_ellipsoidRadii_Array[0], _ellipsoidRadii_Array[1], _ellipsoidRadii_Array[2]);
+
   bool _insideSublevel;
 
   // TODO: add option to set georeference directly from ECEF
