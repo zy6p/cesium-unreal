@@ -2,7 +2,8 @@
 
 #include "CesiumGeoreference.h"
 #include "Camera/PlayerCameraManager.h"
-#include "CesiumGeoreferenceable.h"
+#include "CesiumBoundingVolumeProvider.h"
+#include "CesiumGeoreferenceListener.h"
 #include "CesiumGeospatial/Transforms.h"
 #include "CesiumRuntime.h"
 #include "CesiumTransforms.h"
@@ -124,7 +125,7 @@ void ACesiumGeoreference::PlaceGeoreferenceOriginHere() {
 
   // Long/Lat/Height camera location (also our new target georeference origin)
   std::optional<CesiumGeospatial::Cartographic> targetGeoreferenceOrigin =
-      CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+      this->_ellipsoid.cartesianToCartographic(
           cameraToECEF[3]);
 
   if (!targetGeoreferenceOrigin) {
@@ -230,18 +231,18 @@ void ACesiumGeoreference::InaccurateSetGeoreferenceOrigin(
       targetLongitudeLatitudeHeight.Z));
 }
 
-void ACesiumGeoreference::AddGeoreferencedObject(
-    ICesiumGeoreferenceable* Object) {
+void ACesiumGeoreference::AddGeoreferenceListener(
+    ICesiumGeoreferenceListener* Object) {
 
   // avoid adding duplicates
-  for (TWeakInterfacePtr<ICesiumGeoreferenceable> pObject :
-       this->_georeferencedObjects) {
-    if (Cast<ICesiumGeoreferenceable>(pObject.GetObject()) == Object) {
+  for (TWeakInterfacePtr<ICesiumGeoreferenceListener> pObject :
+       this->_georeferenceListeners) {
+    if (Cast<ICesiumGeoreferenceListener>(pObject.GetObject()) == Object) {
       return;
     }
   }
 
-  this->_georeferencedObjects.Add(*Object);
+  this->_georeferenceListeners.Add(*Object);
 
   // If this object is an Actor or UActorComponent, make sure it ticks _after_
   // the CesiumGeoreference.
@@ -253,7 +254,18 @@ void ACesiumGeoreference::AddGeoreferencedObject(
     pActorComponent->AddTickPrerequisiteActor(this);
   }
 
+  // TODO: try commenting this out, it shouldn't be needed
   this->UpdateGeoreference();
+}
+
+void ACesiumGeoreference::AddBoundingVolumeProvider(
+    ICesiumBoundingVolumeProvider* Object) {
+
+  this->_boundingVolumeProviders.Add(*Object);
+
+  if (this->OriginPlacement == EOriginPlacement::BoundingVolumeOrigin) {
+    this->UpdateGeoreference();
+  }
 }
 
 // Called when the game starts or when spawned
@@ -294,9 +306,9 @@ void ACesiumGeoreference::UpdateGeoreference() {
       //       rather than averaging the centers.
       size_t numberOfPositions = 0;
 
-      for (const TWeakInterfacePtr<ICesiumGeoreferenceable>& pObject :
-           this->_georeferencedObjects) {
-        if (pObject.IsValid() && pObject->IsBoundingVolumeReady()) {
+      for (const TWeakInterfacePtr<ICesiumBoundingVolumeProvider>& pObject :
+           this->_boundingVolumeProviders) {
+        if (pObject.IsValid()) {
           std::optional<Cesium3DTiles::BoundingVolume> bv =
               pObject->GetBoundingVolume();
           if (bv) {
@@ -310,9 +322,7 @@ void ACesiumGeoreference::UpdateGeoreference() {
         center /= numberOfPositions;
       }
     } else if (this->OriginPlacement == EOriginPlacement::CartographicOrigin) {
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84;
-      center = ellipsoid.cartographicToCartesian(
+      center = this->_ellipsoid.cartographicToCartesian(
           CesiumGeospatial::Cartographic::fromDegrees(
               this->OriginLongitude,
               this->OriginLatitude,
@@ -336,8 +346,8 @@ void ACesiumGeoreference::UpdateGeoreference() {
                        CesiumTransforms::scaleToUnrealWorld *
                        this->_ecefToGeoreferenced;
 
-  for (TWeakInterfacePtr<ICesiumGeoreferenceable> pObject :
-       this->_georeferencedObjects) {
+  for (TWeakInterfacePtr<ICesiumGeoreferenceListener> pObject :
+       this->_georeferenceListeners) {
     if (pObject.IsValid()) {
       pObject->NotifyGeoreferenceUpdated();
     }
@@ -378,6 +388,28 @@ void ACesiumGeoreference::PostEditChangeProperty(FPropertyChangedEvent& event) {
 }
 #endif
 
+namespace {
+/**
+ * @brief Clamping addition.
+ *
+ * Returns the sum of the given values, clamping the result to
+ * the minimum/maximum value that can be represented as a 32 bit
+ * signed integer.
+ *
+ * @param f The floating point value
+ * @param i The integer value
+ * @return The clamped result
+ */
+int32 clampedAdd(float f, int32 i) {
+  int64 sum = static_cast<int64>(f) + static_cast<int64>(i);
+  int64 min = static_cast<int64>(TNumericLimits<int32>::Min());
+  int64 max = static_cast<int64>(TNumericLimits<int32>::Max());
+  int64 clamped = FMath::Max(min, FMath::Min(max, sum));
+  return static_cast<int32>(clamped);
+}
+} // namespace
+
+// Called every frame
 bool ACesiumGeoreference::ShouldTickIfViewportsOnly() const { return true; }
 
 #if WITH_EDITOR
@@ -461,27 +493,6 @@ void ACesiumGeoreference::_handleViewportOriginEditing() {
 }
 #endif // WITH_EDITOR
 
-namespace {
-/**
- * @brief Clamping addition.
- *
- * Returns the sum of the given values, clamping the result to
- * the minimum/maximum value that can be represented as a 32 bit
- * signed integer.
- *
- * @param f The floating point value
- * @param i The integer value
- * @return The clamped result
- */
-int32 clampedAdd(float f, int32 i) {
-  int64 sum = static_cast<int64>(f) + static_cast<int64>(i);
-  int64 min = static_cast<int64>(TNumericLimits<int32>::Min());
-  int64 max = static_cast<int64>(TNumericLimits<int32>::Max());
-  int64 clamped = FMath::Max(min, FMath::Min(max, sum));
-  return static_cast<int32>(clamped);
-}
-} // namespace
-
 bool ACesiumGeoreference::_updateSublevelState() {
 
   if (!IsValid(WorldOriginCamera)) {
@@ -519,7 +530,7 @@ bool ACesiumGeoreference::_updateSublevelState() {
       // be loaded
       if (levelName.Equals(level.LevelName)) {
         glm::dvec3 levelECEF =
-            CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+              this->_ellipsoid.cartographicToCartesian(
                 CesiumGeospatial::Cartographic::fromDegrees(
                     level.LevelLongitude,
                     level.LevelLatitude,
@@ -578,9 +589,9 @@ void ACesiumGeoreference::_performOriginRebasing() {
     // Camera has moved too far from the origin, move the origin,
     // but make sure that no component exceeds the maximum value
     // that can be represented as a 32bit signed integer.
-    int64 newX = clampedAdd(cameraLocation.X, originLocation.X);
-    int64 newY = clampedAdd(cameraLocation.Y, originLocation.Y);
-    int64 newZ = clampedAdd(cameraLocation.Z, originLocation.Z);
+      int32 newX = clampedAdd(cameraLocation.X, originLocation.X);
+      int32 newY = clampedAdd(cameraLocation.Y, originLocation.Y);
+      int32 newZ = clampedAdd(cameraLocation.Z, originLocation.Z);
     this->GetWorld()->SetNewWorldOrigin(FIntVector(newX, newY, newZ));
   }
 }
@@ -603,7 +614,7 @@ void ACesiumGeoreference::Tick(float DeltaTime) {
 
 glm::dvec3 ACesiumGeoreference::TransformLongitudeLatitudeHeightToEcef(
     const glm::dvec3& longitudeLatitudeHeight) const {
-  return CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+  return this->_ellipsoid.cartographicToCartesian(
       CesiumGeospatial::Cartographic::fromDegrees(
           longitudeLatitudeHeight.x,
           longitudeLatitudeHeight.y,
@@ -622,7 +633,7 @@ FVector ACesiumGeoreference::InaccurateTransformLongitudeLatitudeHeightToEcef(
 glm::dvec3 ACesiumGeoreference::TransformEcefToLongitudeLatitudeHeight(
     const glm::dvec3& ecef) const {
   std::optional<CesiumGeospatial::Cartographic> llh =
-      CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(ecef);
+      this->_ellipsoid.cartesianToCartographic(ecef);
   if (!llh) {
     // TODO: since degenerate cases only happen close to Earth's center
     // would it make more sense to assign an arbitrary but correct LLH
@@ -786,7 +797,7 @@ ACesiumGeoreference::ComputeEastNorthUpToEcef(const glm::dvec3& ecef) const {
   return glm::dmat3(
       CesiumGeospatial::Transforms::eastNorthUpToFixedFrame(ecef));
 }
-
+/*
 FMatrix ACesiumGeoreference::InaccurateComputeEastNorthUpToEcef(
     const FVector& ecef) const {
   glm::dmat3 enuToEcef =
@@ -797,6 +808,54 @@ FMatrix ACesiumGeoreference::InaccurateComputeEastNorthUpToEcef(
       FVector(enuToEcef[1].x, enuToEcef[1].y, enuToEcef[1].z),
       FVector(enuToEcef[2].x, enuToEcef[2].y, enuToEcef[2].z),
       FVector::ZeroVector);
+}
+*/
+
+glm::dmat4 ACesiumGeoreference::computeToECEF(const FMatrix& matrix, const glm::dvec3 absoluteLocation) const {
+  const glm::dmat4& unrealWorldToEcef = this->_ueAbsToEcef;
+
+  glm::dmat4 actorToAbsoluteWorld(
+      glm::dvec4(
+          matrix.M[0][0],
+          matrix.M[0][1],
+          matrix.M[0][2],
+          matrix.M[0][3]),
+      glm::dvec4(
+          matrix.M[1][0],
+          matrix.M[1][1],
+          matrix.M[1][2],
+          matrix.M[1][3]),
+      glm::dvec4(
+          matrix.M[2][0],
+          matrix.M[2][1],
+          matrix.M[2][2],
+          matrix.M[2][3]),
+      glm::dvec4(absoluteLocation, 1.0));
+
+  return unrealWorldToEcef * actorToAbsoluteWorld;
+}
+
+glm::dmat4 ACesiumGeoreference::computeFromECEF(const FMatrix& matrix, const glm::dvec3 relativeLocation) const {
+  const glm::dmat4& ecefToUnrealWorld = this->_ecefToUeAbs;
+
+  glm::dmat4 ueAbsoluteToUeLocal = glm::dmat4(
+      glm::dvec4(
+          matrix.M[0][0],
+          matrix.M[0][1],
+          matrix.M[0][2],
+          matrix.M[0][3]),
+      glm::dvec4(
+          matrix.M[1][0],
+          matrix.M[1][1],
+          matrix.M[1][2],
+          matrix.M[1][3]),
+      glm::dvec4(
+          matrix.M[2][0],
+          matrix.M[2][1],
+          matrix.M[2][2],
+          matrix.M[2][3]),
+      glm::dvec4(relativeLocation, 1.0));
+    return ueAbsoluteToUeLocal * ecefToUnrealWorld;
 }
 
 /**
@@ -831,7 +890,7 @@ void ACesiumGeoreference::_setSunSky(double longitude, double latitude) {
 
   // SunSky needs to be clamped to the ellipsoid surface at this long/lat
   glm::dvec3 targetEcef =
-      CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
+      this->_ellipsoid.cartographicToCartesian(
           CesiumGeospatial::Cartographic::fromDegrees(
               longitude,
               latitude,
@@ -898,7 +957,8 @@ void ACesiumGeoreference::_lineTraceViewportMouse(
   const FVector& viewLoc = cursor.GetOrigin();
   const FVector& viewDir = cursor.GetDirection();
 
-  FVector lineEnd = viewLoc + viewDir * 637100000.0;
+  const float earthRadiusCm = 637100000.0;
+  FVector lineEnd = viewLoc + viewDir * earthRadiusCm;
 
   static const FName LineTraceSingleName(TEXT("LevelEditorLineTrace"));
   if (ShowTrace) {

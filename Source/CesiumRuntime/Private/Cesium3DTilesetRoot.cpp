@@ -95,15 +95,10 @@ void UCesium3DTilesetRoot::_updateTilesetToUnrealRelativeWorldTransform() {
     return;
   }
 
-  const glm::dmat4& ellipsoidCenteredToUnrealWorld =
-      pTileset->Georeference->GetEllipsoidCenteredToUnrealWorldTransform();
-
   glm::dvec3 relativeLocation =
       this->_absoluteLocation - this->_worldOriginLocation;
-
   FMatrix tilesetActorToUeLocal =
       this->GetComponentToWorld().ToMatrixWithScale();
-
   this->_tilesetToUnrealRelativeWorld = pTileset->Georeference->computeFromECEF(tilesetActorToUeLocal, relativeLocation);
 
   this->_isDirty = true;
