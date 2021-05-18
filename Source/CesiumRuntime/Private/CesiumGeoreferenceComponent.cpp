@@ -67,7 +67,6 @@ void UCesiumGeoreferenceComponent::SnapToEastSouthUp() {
       this->_actorToECEF[3]);
   this->_actorToECEF = ENUtoECEF * CesiumTransforms::scaleToCesium *
                        CesiumTransforms::unrealToOrFromCesium;
-  ;
   this->_updateActorToUnrealRelativeWorldTransform();
   this->_setTransform(this->_actorToUnrealRelativeWorld);
 }
@@ -172,8 +171,6 @@ void UCesiumGeoreferenceComponent::OnUpdateTransform(
   }
 }
 
-void UCesiumGeoreferenceComponent::BeginPlay() { Super::BeginPlay(); }
-
 bool UCesiumGeoreferenceComponent::MoveComponentImpl(
     const FVector& Delta,
     const FQuat& NewRotation,
@@ -225,11 +222,6 @@ void UCesiumGeoreferenceComponent::PostEditChangeProperty(
   }
 }
 #endif
-
-void UCesiumGeoreferenceComponent::OnComponentDestroyed(
-    bool bDestroyingHierarchy) {
-  Super::OnComponentDestroyed(bDestroyingHierarchy);
-}
 
 void UCesiumGeoreferenceComponent::NotifyGeoreferenceUpdated() {
   this->_updateActorToUnrealRelativeWorldTransform();

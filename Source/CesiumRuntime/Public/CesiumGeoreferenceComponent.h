@@ -163,13 +163,9 @@ public:
 
   virtual void OnRegister() override;
 
-  virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
-
   virtual void NotifyGeoreferenceUpdated() override;
 
 protected:
-  // Called when the game starts
-  virtual void BeginPlay() override;
   virtual bool MoveComponentImpl(
       const FVector& Delta,
       const FQuat& NewRotation,
