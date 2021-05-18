@@ -4,6 +4,9 @@
 #include "Cesium3DTiles/registerAllTileContentTypes.h"
 #include "SpdlogUnrealLoggerSink.h"
 #include <spdlog/spdlog.h>
+#include "UnrealEd.h"
+#include "CesiumGeoreferenceComponent.h"
+#include "GeoreferenceVisualizer.h"
 
 #define LOCTEXT_NAMESPACE "FCesiumRuntimeModule"
 
@@ -14,9 +17,21 @@ void FCesiumRuntimeModule::StartupModule() {
 
   std::shared_ptr<spdlog::logger> pLogger = spdlog::default_logger();
   pLogger->sinks() = {std::make_shared<SpdlogUnrealLoggerSink>()};
+
+	if (GUnrealEd)
+	{
+		TSharedPtr<FComponentVisualizer> visualizer = MakeShareable(new FGeoreferenceVisualizer());
+		GUnrealEd->RegisterComponentVisualizer(UCesiumGeoreferenceComponent::StaticClass()->GetFName(), visualizer);
+		visualizer->OnRegister();
+	}
 }
 
-void FCesiumRuntimeModule::ShutdownModule() {}
+void FCesiumRuntimeModule::ShutdownModule() {
+	if (GUnrealEd)
+	{
+		GUnrealEd->UnregisterComponentVisualizer(UCesiumGeoreferenceComponent::StaticClass()->GetFName());
+	}
+}
 
 #undef LOCTEXT_NAMESPACE
 

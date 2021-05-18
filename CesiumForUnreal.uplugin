@@ -19,7 +19,7 @@
 		{
 			"Name": "CesiumRuntime",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PostEngineInit",
 			"WhitelistPlatforms": [ "Win64", "Mac", "Linux" ]
 		},
 		{
