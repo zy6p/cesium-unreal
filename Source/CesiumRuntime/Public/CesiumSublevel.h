@@ -5,6 +5,7 @@
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "CesiumSublevel.generated.h"
 
 /*
  * Sublevels can be georeferenced to the globe by filling out this struct.

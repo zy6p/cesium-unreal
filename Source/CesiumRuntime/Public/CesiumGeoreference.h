@@ -10,6 +10,7 @@
 #include <glm/mat3x3.hpp>
 #include "OriginPlacement.h"
 #include "CesiumSublevel.h"
+#include "CesiumGeoreferenceListener.h"
 #include "CesiumGeoreference.generated.h"
 
 
