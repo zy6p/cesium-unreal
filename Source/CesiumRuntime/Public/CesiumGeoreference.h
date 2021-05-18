@@ -12,8 +12,7 @@
 #include "CesiumSublevel.h"
 #include "CesiumGeoreference.generated.h"
 
-class ICesiumGeoreferenceListener;
-class ICesiumBoundingVolumeProvider;
+
 class APlayerCameraManager;
 
 /**
@@ -122,25 +121,31 @@ public:
   EOriginPlacement OriginPlacement = EOriginPlacement::CartographicOrigin;
 
   /**
-   * The longitude of the custom origin placement in degrees.
+   * The longitude of the custom origin placement in degrees, in the range
+   * [-180, 180]
    */
   UPROPERTY(
       EditAnywhere,
       Category = "Cesium",
       meta =
           (EditCondition =
-               "OriginPlacement==EOriginPlacement::CartographicOrigin"))
+               "OriginPlacement==EOriginPlacement::CartographicOrigin",
+           ClampMin = -180.0,
+           ClampMax = 180.0))
   double OriginLongitude = -105.25737;
 
   /**
-   * The latitude of the custom origin placement in degrees.
+   * The latitude of the custom origin placement in degrees, in the range [-90,
+   * 90]
    */
   UPROPERTY(
       EditAnywhere,
       Category = "Cesium",
       meta =
           (EditCondition =
-               "OriginPlacement==EOriginPlacement::CartographicOrigin"))
+               "OriginPlacement==EOriginPlacement::CartographicOrigin",
+           ClampMin = -90.0,
+           ClampMax = 90.0))
   double OriginLatitude = 39.736401;
 
   /**
@@ -170,7 +175,7 @@ public:
    * it to false can lead to jiterring artifacts when the camera gets far away
    * from the origin.
    */
-  UPROPERTY(EditAnywhere, Category = "Cesium")
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cesium")
   bool KeepWorldOriginNearCamera = true;
 
   /**
@@ -194,7 +199,7 @@ public:
   UPROPERTY(
       EditAnywhere,
       Category = "Cesium",
-      meta = (EditCondition = "KeepWorldOriginNearCamera"))
+      meta = (EditCondition = "KeepWorldOriginNearCamera", ClampMin = 0.0))
   double MaximumWorldOriginDistanceFromCamera = 10000.0;
 
   /**
