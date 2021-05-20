@@ -119,8 +119,13 @@ FRotator AGlobeAwareDefaultPawn::GetViewRotation() const {
 
   FRotator localRotation = ADefaultPawn::GetViewRotation();
   const FVector uePawnViewLocation = this->GetPawnViewLocation();
-  glm::dvec3 pawnViewLocation(uePawnViewLocation.X, uePawnViewLocation.Y, uePawnViewLocation.Z);
-  return this->Georeference->TransformRotatorEnuToUe(localRotation, pawnViewLocation);
+  glm::dvec3 pawnViewLocation(
+      uePawnViewLocation.X,
+      uePawnViewLocation.Y,
+      uePawnViewLocation.Z);
+  return this->Georeference->TransformRotatorEnuToUe(
+      localRotation,
+      pawnViewLocation);
 }
 
 FRotator AGlobeAwareDefaultPawn::GetBaseAimRotation() const {

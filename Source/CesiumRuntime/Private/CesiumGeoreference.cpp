@@ -125,8 +125,7 @@ void ACesiumGeoreference::PlaceGeoreferenceOriginHere() {
 
   // Long/Lat/Height camera location (also our new target georeference origin)
   std::optional<CesiumGeospatial::Cartographic> targetGeoreferenceOrigin =
-      this->_ellipsoid.cartesianToCartographic(
-          cameraToECEF[3]);
+      this->_ellipsoid.cartesianToCartographic(cameraToECEF[3]);
 
   if (!targetGeoreferenceOrigin) {
     // This only happens when the location is too close to the center of the
@@ -529,12 +528,11 @@ bool ACesiumGeoreference::_updateSublevelState() {
       // if this is a known level, we need to tell it whether or not it should
       // be loaded
       if (levelName.Equals(level.LevelName)) {
-        glm::dvec3 levelECEF =
-              this->_ellipsoid.cartographicToCartesian(
-                CesiumGeospatial::Cartographic::fromDegrees(
-                    level.LevelLongitude,
-                    level.LevelLatitude,
-                    level.LevelHeight));
+        glm::dvec3 levelECEF = this->_ellipsoid.cartographicToCartesian(
+            CesiumGeospatial::Cartographic::fromDegrees(
+                level.LevelLongitude,
+                level.LevelLatitude,
+                level.LevelHeight));
 
         if (glm::length(levelECEF - cameraECEF) < level.LoadRadius) {
           isInsideSublevel = true;
@@ -589,9 +587,9 @@ void ACesiumGeoreference::_performOriginRebasing() {
     // Camera has moved too far from the origin, move the origin,
     // but make sure that no component exceeds the maximum value
     // that can be represented as a 32bit signed integer.
-      int32 newX = clampedAdd(cameraLocation.X, originLocation.X);
-      int32 newY = clampedAdd(cameraLocation.Y, originLocation.Y);
-      int32 newZ = clampedAdd(cameraLocation.Z, originLocation.Z);
+    int32 newX = clampedAdd(cameraLocation.X, originLocation.X);
+    int32 newY = clampedAdd(cameraLocation.Y, originLocation.Y);
+    int32 newZ = clampedAdd(cameraLocation.Z, originLocation.Z);
     this->GetWorld()->SetNewWorldOrigin(FIntVector(newX, newY, newZ));
   }
 }
@@ -811,7 +809,9 @@ FMatrix ACesiumGeoreference::InaccurateComputeEastNorthUpToEcef(
 }
 */
 
-glm::dmat4 ACesiumGeoreference::computeToECEF(const FMatrix& matrix, const glm::dvec3 absoluteLocation) const {
+glm::dmat4 ACesiumGeoreference::computeToECEF(
+    const FMatrix& matrix,
+    const glm::dvec3 absoluteLocation) const {
   const glm::dmat4& unrealWorldToEcef = this->_ueAbsToEcef;
 
   glm::dmat4 actorToAbsoluteWorld(
@@ -835,7 +835,9 @@ glm::dmat4 ACesiumGeoreference::computeToECEF(const FMatrix& matrix, const glm::
   return unrealWorldToEcef * actorToAbsoluteWorld;
 }
 
-glm::dmat4 ACesiumGeoreference::computeFromECEF(const FMatrix& matrix, const glm::dvec3 relativeLocation) const {
+glm::dmat4 ACesiumGeoreference::computeFromECEF(
+    const FMatrix& matrix,
+    const glm::dvec3 relativeLocation) const {
   const glm::dmat4& ecefToUnrealWorld = this->_ecefToUeAbs;
 
   glm::dmat4 ueAbsoluteToUeLocal = glm::dmat4(
@@ -855,7 +857,7 @@ glm::dmat4 ACesiumGeoreference::computeFromECEF(const FMatrix& matrix, const glm
           matrix.M[2][2],
           matrix.M[2][3]),
       glm::dvec4(relativeLocation, 1.0));
-    return ueAbsoluteToUeLocal * ecefToUnrealWorld;
+  return ueAbsoluteToUeLocal * ecefToUnrealWorld;
 }
 
 /**
@@ -889,12 +891,8 @@ void ACesiumGeoreference::_setSunSky(double longitude, double latitude) {
   }
 
   // SunSky needs to be clamped to the ellipsoid surface at this long/lat
-  glm::dvec3 targetEcef =
-      this->_ellipsoid.cartographicToCartesian(
-          CesiumGeospatial::Cartographic::fromDegrees(
-              longitude,
-              latitude,
-              0.0));
+  glm::dvec3 targetEcef = this->_ellipsoid.cartographicToCartesian(
+      CesiumGeospatial::Cartographic::fromDegrees(longitude, latitude, 0.0));
   glm::dvec4 targetAbsUe = this->_ecefToUeAbs * glm::dvec4(targetEcef, 1.0);
 
   const FIntVector& originLocation = this->GetWorld()->OriginLocation;

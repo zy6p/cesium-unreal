@@ -327,7 +327,9 @@ void UCesiumGeoreferenceComponent::_updateActorToECEF() {
   FMatrix actorToRelativeWorld =
       this->_ownerRoot->GetComponentToWorld().ToMatrixWithScale();
 
-  this->_actorToECEF = this->Georeference->computeToECEF(actorToRelativeWorld, this->_absoluteLocation);
+  this->_actorToECEF = this->Georeference->computeToECEF(
+      actorToRelativeWorld,
+      this->_absoluteLocation);
 
   this->_updateDisplayECEF();
   this->_updateDisplayLongitudeLatitudeHeight();
