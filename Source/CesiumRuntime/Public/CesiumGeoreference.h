@@ -2,17 +2,16 @@
 
 #pragma once
 
+#include "CesiumGeoreferenceListener.h"
+#include "CesiumSublevel.h"
 #include "Components/ActorComponent.h"
 #include "Containers/UnrealString.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "OriginPlacement.h"
 #include "UObject/WeakInterfacePtr.h"
 #include <glm/mat3x3.hpp>
-#include "OriginPlacement.h"
-#include "CesiumSublevel.h"
-#include "CesiumGeoreferenceListener.h"
 #include "CesiumGeoreference.generated.h"
-
 
 class APlayerCameraManager;
 
@@ -376,9 +375,8 @@ private: // TODO_GEOREF These should be private, I guess...
    * origin). The returned transformation works in Unreal's left-handed
    * coordinate system.
    */
-  //UFUNCTION(BlueprintCallable, Category = "Cesium")
+  // UFUNCTION(BlueprintCallable, Category = "Cesium")
   FMatrix InaccurateComputeEastNorthUpToUnreal(const FVector& Ue) const;
-
 
   /**
    * Computes the rotation matrix from the local East-North-Up to
@@ -391,11 +389,10 @@ private: // TODO_GEOREF These should be private, I guess...
    * Earth-Centered, Earth-Fixed (ECEF) at the specified ECEF location.
    */
   // TODO_GEOREF Not used
-  //UFUNCTION(BlueprintCallable, Category = "Cesium")
-  //FMatrix InaccurateComputeEastNorthUpToEcef(const FVector& Ecef) const;
+  // UFUNCTION(BlueprintCallable, Category = "Cesium")
+  // FMatrix InaccurateComputeEastNorthUpToEcef(const FVector& Ecef) const;
 
 public:
-
   /*
    * GEOREFERENCE TRANSFORMS
    */
@@ -407,10 +404,11 @@ public:
    *
    * Gets a matrix that transforms coordinates from the "Georeference" reference
    * frame defined by this instance to the "Ellipsoid-centered" reference frame,
-   * which is usually Earth-centered, Earth-fixed. See {@link reference-frames.md}.
+   * which is usually Earth-centered, Earth-fixed. See {@link
+   * reference-frames.md}.
    */
   // TODO_GEOREF Not used
-  //const glm::dmat4& GetGeoreferencedToEllipsoidCenteredTransform() const {
+  // const glm::dmat4& GetGeoreferencedToEllipsoidCenteredTransform() const {
   //  return this->_georeferencedToEcef;
   //}
 
@@ -421,11 +419,11 @@ public:
    *
    * Gets a matrix that transforms coordinates from the "Ellipsoid-centered"
    * reference frame (which is usually Earth-centered, Earth-fixed) to the
-   * "Georeferenced" reference frame defined by this instance. See 
+   * "Georeferenced" reference frame defined by this instance. See
    * {@link reference-frames.md}.
    */
   // TODO_GEOREF Not used
-  //const glm::dmat4& GetEllipsoidCenteredToGeoreferencedTransform() const {
+  // const glm::dmat4& GetEllipsoidCenteredToGeoreferencedTransform() const {
   //  return this->_ecefToGeoreferenced;
   //}
 
@@ -438,12 +436,13 @@ public:
    * to the "Ellipsoid-centered" reference frame (which is usually
    * Earth-centered, Earth-fixed). See {@link reference-frames.md}.
    */
-  // TODO_GEOREF Don't force users to twiddle with matrices, replaced with computeToECEF
-  //const glm::dmat4& GetUnrealWorldToEllipsoidCenteredTransform() const {
+  // TODO_GEOREF Don't force users to twiddle with matrices, replaced with
+  // computeToECEF
+  // const glm::dmat4& GetUnrealWorldToEllipsoidCenteredTransform() const {
   //  return this->_ueAbsToEcef;
   //}
-  glm::dmat4 computeToECEF(const FMatrix& matrix, const glm::dvec3 absoluteLocation) const;
-
+  glm::dmat4
+  computeToECEF(const FMatrix& matrix, const glm::dvec3 absoluteLocation) const;
 
   /**
    * @brief Gets the transformation from the "Ellipsoid-centered" reference
@@ -454,12 +453,15 @@ public:
    * "Unreal world" reference frame (with respect to the absolute world origin,
    * not the floating origin). See {@link reference-frames.md}.
    */
-  // TODO_GEOREF Don't force users to twiddle with matrices - partially replaced with computeFromECEF,
-  // but ... it's used in some places in a non-obvious way...
+  // TODO_GEOREF Don't force users to twiddle with matrices - partially replaced
+  // with computeFromECEF, but ... it's used in some places in a non-obvious
+  // way...
   const glm::dmat4& GetEllipsoidCenteredToUnrealWorldTransform() const {
     return this->_ecefToUeAbs;
   }
-  glm::dmat4 computeFromECEF(const FMatrix& matrix, const glm::dvec3 relativeLocation) const;
+  glm::dmat4 computeFromECEF(
+      const FMatrix& matrix,
+      const glm::dvec3 relativeLocation) const;
 
   /**
    * Adds a ICesiumGeoreferenceListener to be notified on changes to the world
@@ -524,11 +526,14 @@ private:
   double _ecefToUeAbs_Array[16];
   glm::dmat4& _ecefToUeAbs = *(glm::dmat4*)_ecefToUeAbs_Array;
 
-  //UPROPERTY()
-  //double _ellipsoidRadii_Array[3];
-  //CesiumGeospatial::Ellipsoid _ellipsoid = CesiumGeospatial::Ellipsoid(_ellipsoidRadii_Array[0], _ellipsoidRadii_Array[1], _ellipsoidRadii_Array[2]);
-  // 
-  CesiumGeospatial::Ellipsoid _ellipsoid = CesiumGeospatial::Ellipsoid(6378137.0, 6378137.0, 6356752.3142451793);
+  // UPROPERTY()
+  // double _ellipsoidRadii_Array[3];
+  // CesiumGeospatial::Ellipsoid _ellipsoid =
+  // CesiumGeospatial::Ellipsoid(_ellipsoidRadii_Array[0],
+  // _ellipsoidRadii_Array[1], _ellipsoidRadii_Array[2]);
+  //
+  CesiumGeospatial::Ellipsoid _ellipsoid =
+      CesiumGeospatial::Ellipsoid(6378137.0, 6378137.0, 6356752.3142451793);
 
   bool _insideSublevel;
 
@@ -594,5 +599,4 @@ private:
   TArray<TWeakInterfacePtr<ICesiumGeoreferenceListener>> _georeferenceListeners;
   TArray<TWeakInterfacePtr<ICesiumBoundingVolumeProvider>>
       _boundingVolumeProviders;
-
 };
