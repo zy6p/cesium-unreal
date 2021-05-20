@@ -1,7 +1,7 @@
 #pragma once
 #include "ComponentVisualizer.h"
 
-class FGeoreferenceVisualizer : public FComponentVisualizer {
+class FGltfBoundingBoxVisualizer : public FComponentVisualizer {
 private:
   virtual void DrawVisualization(
       const UActorComponent* Component,
