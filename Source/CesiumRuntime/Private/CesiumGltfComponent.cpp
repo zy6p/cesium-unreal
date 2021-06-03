@@ -399,18 +399,24 @@ static std::optional<LoadTextureResult> loadTexture(
   // TODO: Use correct bytesPerChannel? Does gltf support unnormalized pixel
   // formats?
   EPixelFormat pixelFormat;
-  switch (image.cesium.channels) {
-  case 1:
-    pixelFormat = PF_R8;
-    break;
-  case 2:
-    pixelFormat = PF_R8G8;
-    break;
-  case 3:
-  case 4:
-  default:
-    pixelFormat = PF_R8G8B8A8;
-  };
+
+  if (image.cesium.compressedPixelFormat != 0) {
+    pixelFormat = image.cesium.compressedPixelFormat;
+  } else {
+    switch (image.cesium.channels) {
+    case 1:
+      pixelFormat = PF_R8;
+      break;
+    case 2:
+      pixelFormat = PF_R8G8;
+      break;
+    case 3:
+    case 4:
+    default:
+      pixelFormat = PF_R8G8B8A8;
+    };
+  }
+
 
   LoadTextureResult result{};
   result.pTextureData = createTexturePlatformData(
@@ -487,10 +493,18 @@ static std::optional<LoadTextureResult> loadTexture(
 
   void* pTextureData = static_cast<unsigned char*>(
       result.pTextureData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
-  FMemory::Memcpy(
+  
+  if (image.cesium.compressedPixelData.size() > 0) {
+    FMemory::Memcpy(
+      pTextureData,
+      image.cesium.compressedPixelData.data(),
+      image.cesium.compressedPixelData.size());
+  } else {
+    FMemory::Memcpy(
       pTextureData,
       image.cesium.pixelData.data(),
-      image.cesium.pixelData.size());
+      image.cesium.pixelData.size())
+  }
 
   if (result.filter == TextureFilter::TF_Trilinear) {
     // Generate mip levels.
